@@ -1,49 +1,53 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { TaskStatus } from './tasks.model';
-import { TaskCreateDto } from './dto/task-create.dto';
-import { GetFilterTaskDto } from './dto/get-filter-task.dto';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { Task, Prisma } from '@prisma/client';
+import { Task, TaskStatus } from '@prisma/client';
+import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
+import { CreateTaskDto } from './dto/create-task.dto';
+
 @Injectable()
 export class TasksService {
   constructor(private prisma: PrismaService) {}
-  async createTask(data: Prisma.TaskCreateInput): Promise<Task> {
-    return this.prisma.task.create({ data });
+
+  async createTask(dto: CreateTaskDto): Promise<Task> {
+    return this.prisma.task.create({ data: dto });
   }
-  async getTaskById(
-    taskWhereUniqueInput: Prisma.TaskWhereUniqueInput,
-  ): Promise<Task> {
-    return this.prisma.task.findUnique({ where: taskWhereUniqueInput });
+
+  async getTaskById(id: number): Promise<Task> {
+    return this.prisma.task.findUnique({ where: { id } });
   }
-  async tasks(params: {
-    skip?: number;
-    take?: number;
-    cursor?: Prisma.TaskWhereUniqueInput;
-    where?: Prisma.TaskWhereInput;
-    orderBy?: Prisma.TaskOrderByWithRelationInput;
-  }): Promise<Task[]> {
-    const { skip, take, cursor, where, orderBy } = params;
-    return this.prisma.task.findMany({
-      skip,
-      take,
-      cursor,
-      where,
-      orderBy,
-    });
+
+  async getTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
+    const { status, search } = filterDto;
+
+    //TODO check if this functions throws an error if you do not send anything in the body at all. In get-tasks.filter.dto.ts both properties are optional, so they can be undefined, right?
+
+    try {
+      return this.prisma.task.findMany({
+        where: {
+          status,
+          OR: [
+            {
+              description: { contains: search },
+              title: { contains: search },
+            },
+          ],
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
   }
-  async deleteTaskById(where: Prisma.TaskWhereUniqueInput): Promise<Task> {
+
+  async deleteTaskById(id: number): Promise<Task> {
     return this.prisma.task.delete({
-      where,
+      where: { id },
     });
   }
-  async updateTaskStatus(params: {
-    where: Prisma.TaskWhereUniqueInput;
-    data: Prisma.TaskUpdateInput;
-  }): Promise<Task> {
-    const { data, where } = params;
+
+  async updateTaskStatus(id: number, status: TaskStatus): Promise<Task> {
     return this.prisma.task.update({
-      data,
-      where,
+      where: { id },
+      data: { status },
     });
   }
   /*  private tasks:Task[] =[];

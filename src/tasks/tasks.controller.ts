@@ -4,60 +4,50 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
 } from '@nestjs/common';
-import { GetFilterTaskDto } from './dto/get-filter-task.dto';
-import { TaskCreateDto } from './dto/task-create.dto';
+import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
+import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { TasksService } from './tasks.service';
 import { Task } from '@prisma/client';
+
 @Controller('tasks')
 export class TasksController {
   constructor(private taskService: TasksService) {}
+
   @Post()
-  async createTask(@Body() taskCreateDto: TaskCreateDto): Promise<Task> {
-    return this.taskService.createTask(taskCreateDto);
+  async createTask(@Body() createTaskDto: CreateTaskDto): Promise<Task> {
+    return this.taskService.createTask(createTaskDto);
   }
+
   @Get('/:id')
-  async getTask(@Param('id') id: string): Promise<Task> {
-    return this.taskService.getTaskById({ id: Number(id) });
+  async getTask(@Param('id', ParseIntPipe) id: number): Promise<Task> {
+    return this.taskService.getTaskById(id);
   }
+
   @Get()
-  async getAllTask(@Query() filterDto: GetFilterTaskDto): Promise<Task[]> {
-    const { search, status } = filterDto;
-    return this.taskService.tasks({
-      where: {
-        OR: [
-          {
-            title: { contains: search },
-          },
-          {
-            description: { contains: search },
-          },
-          {
-            status: { equals: status },
-          },
-        ],
-      },
-    });
+  async getAllTask(@Query() filterDto: GetTasksFilterDto): Promise<Task[]> {
+    return this.taskService.getTasks(filterDto);
   }
+
   @Delete('/:id')
-  async deleteTask(@Param('id') id: string): Promise<Task> {
-    return this.taskService.deleteTaskById({ id: Number(id) });
+  async deleteTask(@Param('id', ParseIntPipe) id: number): Promise<Task> {
+    return this.taskService.deleteTaskById(id);
   }
+
   @Patch('/:id/status')
   async updateStatus(
-    @Param('id') id: string,
-    @Body() statusUpdateDto: UpdateStatusDto,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateStatusDto: UpdateStatusDto,
   ): Promise<Task> {
-    const { status } = statusUpdateDto;
-    return this.taskService.updateTaskStatus({
-      where: { id: Number(id) },
-      data: { status: status },
-    });
+    const { status } = updateStatusDto;
+    return this.taskService.updateTaskStatus(id, status);
   }
+
   /*@Get()
     getAllTask(@Query() filterDto:GetFilterTaskDto):Task[]{
      if(Object.keys(filterDto).length)  {
@@ -68,8 +58,8 @@ export class TasksController {
      
     }
     @Post()
-    createTask(@Body() taskCreateDto:TaskCreateDto):Task{
-     return this.taskService.createTask(taskCreateDto);
+    createTask(@Body() createTaskDto:TaskCreateDto):Task{
+     return this.taskService.createTask(createTaskDto);
     }
     @Get('/:id')
     getTask(@Param('id') id:string){
@@ -80,8 +70,8 @@ export class TasksController {
         return this.taskService.deleteTaskById(id);
     }
     @Patch('/:id/status')
-    updateStatus(@Param('id') id:string,@Body() statusUpdateDto:UpdateStatusDto){    
-       const  {status} = statusUpdateDto;
+    updateStatus(@Param('id') id:string,@Body() updateStatusDto:UpdateStatusDto){    
+       const  {status} = updateStatusDto;
        return this.taskService.updateTaskStatus(id,status);
     }*/
 }
