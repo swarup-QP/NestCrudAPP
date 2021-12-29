@@ -1,7 +1,7 @@
-import { IsEnum } from "class-validator";
-import { TaskStatus } from "../tasks.model";
+import { TaskStatus } from '@prisma/client';
+import { IsEnum } from 'class-validator';
 
-export class UpdateStatusDto{
-    @IsEnum(TaskStatus)
-    status:TaskStatus;
+export class UpdateStatusDto {
+  @IsEnum(TaskStatus)
+  status: TaskStatus;
 }

@@ -9,15 +9,16 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
 model Task {
-  id    Int     @default(autoincrement()) @id
-  title String  
-  description  String
-  status TaskStatus
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String
+  status      TaskStatus
 }
 
 enum TaskStatus {
-  Open
-  Done
+  OPEN
+  DONE
   IN_PROGRESS
 }
