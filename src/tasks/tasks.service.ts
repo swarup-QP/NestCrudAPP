@@ -18,28 +18,18 @@ export class TasksService {
 
   async getTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
     const { status, search } = filterDto;
-
-    //TODO check if this functions throws an error if you do not send anything in the body at all. In get-tasks.filter.dto.ts both properties are optional, so they can be undefined, right?
-    const filter = {
-      where: {},
-    };
+    const filter: { [key: string]: any } = {};
     if (status) {
-      filter.where = status;
+      filter.status = status;
     }
-
     if (search) {
-      filter.where = {
-        OR: [
-          {
-            description: { contains: search },
-            title: { contains: search },
-          },
-        ],
-      };
+      filter.OR = [
+        { description: { contains: search } },
+        { title: { contains: search } },
+      ];
     }
-
     try {
-      return this.prisma.task.findMany(filter);
+      return this.prisma.task.findMany({ where: filter });
     } catch (error) {
       throw new InternalServerErrorException();
     }
